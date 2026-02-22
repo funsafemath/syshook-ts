@@ -14,6 +14,11 @@ The library is lightweight (~320kb, ~130kb compressed), you can even embed it in
 2) Pass the `libsyshook` module object to the `initSyshook` function
 3) Call `setupUnotify`
 
+#### Installation
+```sh
+npm install frida-syshook
+```
+
 #### Example Usage:
 
 ```ts
