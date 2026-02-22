@@ -3,16 +3,16 @@ System call hooking for [Frida](https://frida.re/) using [seccomp user notificat
 `seccomp_unotify` is great for system call hooking because:
 1) It's performant, you don't spend any time on system calls you don't intercept (ptr\*ce)
 2) Seccomp doesn't interfere with the process much (ptr\*ce)
-3) It's kernel-enforced, so you can be sure every syscall from the process and every its subprocess will be intercepted (as long as you call the setup function early enough)
+3) It's kernel-enforced, so you can be sure every syscall from the process and all of its subprocesses will be intercepted (as long as you call the setup function early enough)
 4) Nobody cares to check if it's enabled
 
-To use this library, you need to
+To use this library, you need to:
 
 0) Compile/download [`libsyshook.so`](https://github.com/funsafemath/syshook) 
 1) Load the `libsyshook` shared library into the process by any means. 
 The library is lightweight (~320kb, ~130kb compressed), you can even embed it into your js/ts source code and load it from there
 2) Pass the `libsyshook` module object to the `initSyshook` function
-3) Call `setupUnotify`
+3) Call `setupUnotify` in the main thread somehow
 
 #### Installation
 ```sh
@@ -50,7 +50,7 @@ Currently the sync_thread flag is disabled, which means you need to call the set
 
 #### API Notes
 
-`setupUnotify` accepts a `Record<number, SyscallHandler>`, id est an object which keys are system call numbers and values are callbacks of the type `(syscall: Syscall) => void | RetType | Errno | "neverRespond"`.
+`setupUnotify` accepts a `Record<number, SyscallHandler>`, an object whose keys are system call numbers and values are callbacks of the type `(syscall: Syscall) => void | RetType | Errno | "neverRespond"`.
 
 - Returning `void` continues the system call.
 
