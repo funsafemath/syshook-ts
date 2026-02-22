@@ -7,6 +7,7 @@ System call hooking for [Frida](https://frida.re/) using [seccomp user notificat
 4) Nobody cares to check if it's enabled
 
 To use this library, you need to
+
 0) Compile/download [`libsyshook.so`](https://github.com/funsafemath/syshook) 
 1) Load the `libsyshook` shared library into the process by any means. 
 The library is lightweight (~320kb, ~130kb compressed), you can even embed it into your js/ts source code and load it from there
@@ -40,7 +41,7 @@ setupUnotify({
 
 This will log paths of files opened with `openat(2)`, and if the path is `/dev/urandom`, it's replaced by `/dev/zero`.
 
-Currently the sync_thread flag is disabled, which means you need to setup the library in the main thread as soon as possible, before it spawns any threads, to be able to intercept every syscall. Initializing after being loaded through frida-server/System.LoadLibrary does not always initialize the filter on the main thread, so you may consider intercepting a frequently used function (mmap), setting up a filter and then detaching.
+Currently the sync_thread flag is disabled, which means you need to call the setupUnotify in the main thread as soon as possible, before it spawns any threads, to be able to intercept every syscall. Initializing after being loaded through frida-server/System.LoadLibrary does not always initialize the filter on the main thread, so you may consider intercepting a frequently used function (mmap), setting up a filter and then detaching.
 
 #### API Notes
 
