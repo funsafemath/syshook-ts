@@ -1,12 +1,17 @@
 {
     "name": "frida-syshook",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "System call hooking for Frida",
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": "./dist/index.js"
+    },
     "devDependencies": {
         "@types/frida-gum": "^19.0.0",
         "@types/node": "^18.19.111"
-    },
-    "exports": {
-        ".": "./src/index.js"
     }
 }
