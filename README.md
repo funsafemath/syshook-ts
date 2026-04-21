@@ -88,15 +88,17 @@ Seccomp filters are enforced by the kernel and are inherited by all spawned thre
 
 `ProcessPointer` doesn't have all methods of a `NativePointer` (yet), but you may cast it to a `NativePointer` by using the `asPtr()` method or accessing the `ptr` field if you are sure it belongs to the same address space the filter was installed in. This is fine if the process spawns threads, but not subprocesses (which most processes don't spawn, really).
 
-`syscall` object have syscalls `write(2)`, `mmap(2)`, `sched_yield(2)`, `gettid(2)` commented out, as they may cause deadlocks. If you really want to, you can pass their syscall numbers manually.
+`syscall` object have syscalls `write(2)`, `mmap(2)`, `sched_yield(2)`, `gettid(2)` commented out, as they will surely cause deadlocks. If you really want to, you can pass their syscall numbers manually.
 
-I guess the handler thread somehow synchronizes with another thread, which makes these syscalls, leading to a deadlock? 
+Deadlock will happen if v8 runtime makes an intercepted syscall while holding the lock. Those can mostly be fixed by finding out which thread currently holds the v8 lock and allowing it if it's the one from which the syscall comes. That would not fix all problems, consider a non-async-signal-safe (~non-reentrant) function: a non-reentrant `malloc` implementation makes a `mmap(2)` (or, even worse, `brk(2)`) syscall, then it's being intercepted by your function that for any reason calls `malloc`, which'll corrupt the process.
 
-It can be fixed by creating a fork of the process instead of a thread, but then some restrictions would apply: a thread can always access its virtual memory, but you can't guarantee that fork will be able access the memory of its parent or even a child.
+These problems may be fixed completely by creating a fork of the process instead of a thread, but then some restrictions would apply: a thread can always access its virtual memory, but you can't guarantee that fork will be able access the memory of its parent or even a child, this is probably solvable by acquiring a `/proc/pid/mem` descriptor while it's still possible or sending it through a unix socket.
+
+Another solution to the second (reentrancy) problem is not using libc functions in your hooks at all, which requires either using frida-gum C API or statically linking Frida, which is non-trivial, albeit possible (switching thread-local storage location on entry/exit would solve most problems caused by having 2 libcs in one process).
 
 A fork, however, has a different advantage: you can safely use the `sync_threads`, which retroactively applies the seccomp filter to every thread of a process.
 
-If you really want to hook these syscalls or use `sync_threads`, feel free to modify the `src/ffi/setup.rs` file, it's quite straightforward (you also can ask your favorite slop generator to do it for you).
+If you really want to hook these syscalls or use `sync_threads`, feel free to modify the `src/ffi/setup.rs` file, it's quite straightforward (you also can ask your favorite slop generator to do it for you). Using `sync_threads` can be made safe without spawning a separate process if you modify the filter itself to whitelist the thread that runs the unotify loop.
 
 Alternatively, you can preload the syshook library directly and use it without Frida, see [`ctor`](https://crates.io/crates/ctor). In this case you won't need to fork to intercept these syscalls, also Rust is much more pleasant to write.
 
